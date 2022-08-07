@@ -1,5 +1,10 @@
 # movie-backend-service
 
+### Trackig of progress of the project
+- [Jira Board](https://learnwithjava.atlassian.net/jira/software/c/projects/SR/boards/1?selectedIssue=SR-2)
+
+### Architecture of the movie service project
+![Architecture diagram](/docs/architecture.png)
 
 #### Setup MongoDB in local
 ```
