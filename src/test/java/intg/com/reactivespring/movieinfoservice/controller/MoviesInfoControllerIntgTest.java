@@ -120,6 +120,11 @@ class MoviesInfoControllerIntgTest {
   }
 
   @Test
+  void getMoviesById_notFound() {
+    webTestClient.get().uri("/v1/movieinfos/def").exchange().expectStatus().is4xxClientError();
+  }
+
+  @Test
   void updateMovieInfo() {
     var movieInfo =
         new MovieInfo(
@@ -145,19 +150,32 @@ class MoviesInfoControllerIntgTest {
   }
 
   @Test
-  void deleteMovieInfo() {
+  void updateMovieInfo_notFound() {
+    var movieInfo =
+        new MovieInfo(
+            "abc",
+            "Batman begins",
+            2021,
+            List.of("Christian Bale", "Tom Hardy"),
+            LocalDate.parse("2012-07-20"));
     webTestClient
-        .delete()
+        .put()
+        .uri("/v1/movieinfos/def")
+        .bodyValue(movieInfo)
+        .exchange()
+        .expectStatus()
+        .is4xxClientError();
+  }
+
+  @Test
+  void deleteMovieInfo() {
+    webTestClient.delete().uri("/v1/movieinfos/abc").exchange().expectStatus().is2xxSuccessful();
+
+    webTestClient
+        .get()
         .uri("/v1/movieinfos/abc")
         .exchange()
         .expectStatus()
-        .is2xxSuccessful();
-
-    webTestClient.get()
-            .uri("/v1/movieinfos/abc")
-            .exchange()
-            .expectStatus()
-            .is2xxSuccessful()
-            .expectBody(Void.class);
+        .is4xxClientError();
   }
 }
