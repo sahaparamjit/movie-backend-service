@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 
 @Service
 public class MovieInfoService {
-  private MovieInfoRepository movieInfoRepository;
+  private final MovieInfoRepository movieInfoRepository;
 
   public MovieInfoService(MovieInfoRepository movieInfoRepository) {
     this.movieInfoRepository = movieInfoRepository;
