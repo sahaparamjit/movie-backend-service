@@ -95,7 +95,8 @@ class MoviesInfoControllerIntgTest {
             listEntityExchangeResult -> {
               var responseBody = listEntityExchangeResult.getResponseBody();
               assert Objects.requireNonNull(responseBody).stream()
-                      .filter(x -> x.getMovieInfoId().equals("abc")).count()
+                      .filter(x -> x.getMovieInfoId().equals("abc"))
+                      .count()
                   == 1;
             });
   }
@@ -107,13 +108,56 @@ class MoviesInfoControllerIntgTest {
         .uri("/v1/movieinfos/abc")
         .exchange()
         .expectBody()
-            .jsonPath("$.name").isEqualTo("Dark Knight Rises");
-        /*.consumeWith(
-            listEntityExchangeResult -> {
-              var responseBody = listEntityExchangeResult.getResponseBody();
-              assert Objects.requireNonNull(responseBody).getMovieInfoId().equals("abc");
-              assert responseBody.getName().equals("Dark Knight Rises");
-              assert responseBody.getYear() == 2012;
-            });*/
+        .jsonPath("$.name")
+        .isEqualTo("Dark Knight Rises");
+    /*.consumeWith(
+    listEntityExchangeResult -> {
+      var responseBody = listEntityExchangeResult.getResponseBody();
+      assert Objects.requireNonNull(responseBody).getMovieInfoId().equals("abc");
+      assert responseBody.getName().equals("Dark Knight Rises");
+      assert responseBody.getYear() == 2012;
+    });*/
+  }
+
+  @Test
+  void updateMovieInfo() {
+    var movieInfo =
+        new MovieInfo(
+            "abc",
+            "Batman begins",
+            2021,
+            List.of("Christian Bale", "Tom Hardy"),
+            LocalDate.parse("2012-07-20"));
+    webTestClient
+        .put()
+        .uri("/v1/movieinfos/abc")
+        .bodyValue(movieInfo)
+        .exchange()
+        .expectStatus()
+        .is2xxSuccessful()
+        .expectBody(MovieInfo.class)
+        .consumeWith(
+            movieInfoEntityExchangeResult -> {
+              var responseBody = movieInfoEntityExchangeResult.getResponseBody();
+              assert Objects.requireNonNull(responseBody).getYear() == 2021;
+              assert Objects.requireNonNull(responseBody).getName().equals("Batman begins");
+            });
+  }
+
+  @Test
+  void deleteMovieInfo() {
+    webTestClient
+        .delete()
+        .uri("/v1/movieinfos/abc")
+        .exchange()
+        .expectStatus()
+        .is2xxSuccessful();
+
+    webTestClient.get()
+            .uri("/v1/movieinfos/abc")
+            .exchange()
+            .expectStatus()
+            .is2xxSuccessful()
+            .expectBody(Void.class);
   }
 }
