@@ -2,12 +2,14 @@ package com.reactivespring.movieinfoservice.service;
 
 import com.reactivespring.movieinfoservice.controller.MoviesInfoController;
 import com.reactivespring.movieinfoservice.domain.MovieInfo;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.util.AssertionErrors;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -72,6 +74,32 @@ class MovieInfoServiceTest {
               var responseBody = movieInfoEntityExchangeResult.getResponseBody();
               assert responseBody != null;
               assert (responseBody.getName().equals("Batman Begins"));
+            });
+  }
+
+  @Test
+  void addMovieInfo_bean_validation() {
+      var movie =  new MovieInfo(
+              null,
+              "",
+              2005,
+              List.of("", "Michael Cane"),
+              LocalDate.parse("2005-06-15"));
+    webTestClient
+        .post()
+        .uri("/v1/movieinfos")
+        .bodyValue(movie)
+        .exchange()
+        .expectStatus()
+        .is4xxClientError()
+        .expectBody(String.class)
+        .consumeWith(
+            errorEntityExchangeResult -> {
+              var response = errorEntityExchangeResult.getResponseBody();
+              System.out.println(response);
+              var expectedMsg = "movie.cast should be present,movieInfo.name must be present";
+              assert response != null;
+              Assertions.assertEquals(expectedMsg, response);
             });
   }
 
