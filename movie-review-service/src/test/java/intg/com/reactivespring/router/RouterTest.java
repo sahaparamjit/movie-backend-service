@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,6 +19,8 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -112,6 +115,19 @@ class RouterTest {
                   Objects.requireNonNull(responseBody).getRating(), update.getRating());
             });
   }
+    @Test
+    void testUpdateReview_reviewNotFound() {
+        var update = new Review("abc", 2L, "decent movie", 4.0);
+        webTestClient
+                .put()
+                .uri("/v1/reviews/asd")
+                .bodyValue(update)
+                .exchange()
+                .expectStatus()
+                .is4xxClientError()
+                .expectBody(String.class)
+                .isEqualTo("Review not found for id, asd");
+    }
 
   @Test
   void deleteReviewRoute() {

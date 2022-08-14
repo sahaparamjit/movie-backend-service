@@ -1,6 +1,7 @@
 package com.reactivespring.router;
 
 import com.reactivespring.domain.Review;
+import com.reactivespring.exceptionhandler.GlobalErrorHandler;
 import com.reactivespring.handler.ReviewHandler;
 import com.reactivespring.repository.ReviewReactiveRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest
-@ContextConfiguration(classes = {Router.class, ReviewHandler.class})
+@ContextConfiguration(classes = {Router.class, ReviewHandler.class, GlobalErrorHandler.class})
 @AutoConfigureWebTestClient
 class ReviewRouterTest {
   @MockBean ReviewReactiveRepository reviewReactiveRepository;
@@ -65,6 +66,32 @@ class ReviewRouterTest {
               var responseBody = reviewEntityExchangeResult.getResponseBody();
               assert Objects.requireNonNull(responseBody).getRating() == 4.5;
             });
+  }
+
+  @Test
+  void testAddReview_validationError() {
+      // When rating is negative
+      reviewList.get(0).setRating(-6.0);
+      webTestClient
+              .post()
+              .uri("/v1/reviews")
+              .bodyValue(reviewList.get(0))
+              .exchange()
+              .expectStatus()
+              .is4xxClientError()
+              .expectBody(String.class)
+              .isEqualTo("Rating cannot be negative.");
+      // When rating is above 5
+      reviewList.get(0).setRating(6.0);
+      webTestClient
+              .post()
+              .uri("/v1/reviews")
+              .bodyValue(reviewList.get(0))
+              .exchange()
+              .expectStatus()
+              .is4xxClientError()
+              .expectBody(String.class)
+              .isEqualTo("review.rating should be in the range 0 to 5. 0 being worst and 5 being best.");
   }
 
   @Test
@@ -119,6 +146,21 @@ class ReviewRouterTest {
                   Objects.requireNonNull(responseBody).getRating(), update.getRating());
             });
   }
+
+    @Test
+    void testUpdateReview_reviewNotFound() {
+        var update = new Review("abc", 2L, "decent movie", 4.0);
+        when(reviewReactiveRepository.findById(any(String.class))).thenReturn(Mono.empty());
+        webTestClient
+                .put()
+                .uri("/v1/reviews/asd")
+                .bodyValue(update)
+                .exchange()
+                .expectStatus()
+                .is4xxClientError()
+                .expectBody(String.class)
+                .isEqualTo("Review not found for id, asd");
+    }
 
   @Test
   void testDeleteReview() {
